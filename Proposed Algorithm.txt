@@ -1,0 +1,37 @@
+PROPOSED ALGORITHM:
+It is the need of the hour that SLAAC phase should take as small time as possible. This is because in the present day networks, devices 
+constantly get added and migrate to different networks very often. Here we propose an algorithm which satisfies this need without the 
+overhead of cryptographic key generation. Let's have a look into the algorithm, the details of securing the DAD process, and mitigating 
+DoS attacks during duplicate address detection process when we use stateless address autoconfiguration (SLACC) for configuring the IPv6 
+address. During the DAD process in this algorithm, we have two processes that have to be performed: one at the node which sends the NS message, 
+and the second process at the receiver nodes which sends the NA message if the address matches it or else it simply discards it.
+
+ACRONYMS USED:
+NC=Number of collisions
+UF=Uniqueness Flag
+NS_C=Neighbour Solicitation collisions
+RaN0=64 bit random number
+CT= Clock time or the time at the generation
+I_ID= Interface Identifier of the IPv6 link local address
+LLA= Link Local Address
+IP_  T_I_ID=Interface Identifier in the target IP header field
+LLA_R_IP=Received link local address
+IID_RT=Received target interface Identifier in the target IP field.
+
+At the sender node:
+
+1) Initially set the values as NC=0, NS_C=0, UF=1, CT..
+2) Now generate a 64 bit random number and assign it to RaNo.
+3) Apply SHA-1 to the concatenation of (NC, NS_C, CT and RaNo) and take the result to Hash-1.
+4) Now break the hashed result which is in SHA-512 into two equal parts and put in Div_hash1 and Div_hash2.
+5) Now form the interface id (I_ID), by taking 20MSB of Div_hash1 and Div_hash2 and 24 LSB of the generated RaNo at the 2 step.
+6)	Now the interface Id (I_ID)is generated , lets combine it with the network prefix part which is given to us. For this LLA address, we have to perform the DAD process.
+7) Now perform SHA-512 on the interface id (I_ID) and take the result into Hash-2.
+8) Now we have to form the IP_T_I_ID for the icmpv6 header field target ip address by taking 40 MSB of SHA-512 and 24 LSB of the generated link-local address. 
+9) Now for the target IP address field in icmpv6 header is formed by concatenating the local network prefix with IP_T_I_ID to form a 128 bit address.
+10) Now we have to perform the DAD process on the generated link local address whether it is unique or not by sending a Neighbor Solicitation (NS) message.
+
+Now an ICMPv6 type 134 message is sent with the source address as unspecified address and destination address as solicited node multicast address FE80::1. 
+
+11) The source node will receive an NS message for the same LLA whenever a rogue node is trying to perform the DAD process for the same LLA, by this he can carry out the DAD process. 
+Each time this happens the collision count is increased by 1. If the value equals 5 it means that an attack is being carried out by any rouge node.
